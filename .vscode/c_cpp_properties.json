@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "\\\\wsl$\\Debian\\usr\\include\\**",
+                "\\\\wsl$\\Debian\\usr\\local\\include\\**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "gcc-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++20"
+        }
+    ],
+    "version": 4
+}

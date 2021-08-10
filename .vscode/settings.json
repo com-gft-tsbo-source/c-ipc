@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "config.h": "c",
+        "config-server.h": "c",
+        "ipc_common.h": "c"
+    }
+}

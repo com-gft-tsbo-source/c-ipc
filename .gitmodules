@@ -1,0 +1,9 @@
+[submodule "src/go/ms-measure"]
+	path = src/go/ms-measure
+	url = git@ssh.dev.azure.com:v3/tsbo/com.gft.gftmeets.talk.istio-1/com.gft.tsbo-training.src.go.ms-measure
+[submodule "src/go/common"]
+	path = src/go/common
+	url = git@ssh.dev.azure.com:v3/tsbo/com.gft.gftmeets.talk.istio-1/com.gft.tsbo-training.src.go.common
+[submodule "src/go/ms-random"]
+	path = src/go/ms-random
+	url = git@ssh.dev.azure.com:v3/tsbo/com.gft.gftmeets.talk.istio-1/com.gft.tsbo-training.src.go.ms-random
