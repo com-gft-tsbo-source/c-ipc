@@ -1,0 +1,10 @@
+*.o
+*.d
+*.a
+*.iid
+*/bin/*
+*/lib/*
+*/obj/*
+*/dist/*
+.vscode/*
+*/old/*

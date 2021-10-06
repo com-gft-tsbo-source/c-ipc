@@ -1,6 +1,6 @@
 TIMESTAMP ?= $(shell date +%Y%m%d%H%M%S)
 GITHASH := $(shell ( echo "$(GITHASH)" | sed 's/  */\n/g' ; git rev-parse HEAD  ) | sort -u )
-COMPONENT ?= lockfile
+COMPONENT ?= daemon
 TARGET ?= lib$(COMPONENT).a
 
 BASE_BIN_DIR ?= ../../../bin
@@ -8,7 +8,7 @@ BIN_DIR ?= ../dist/bin
 LIB_DIR ?= ../dist/lib
 OBJ_DIR ?= ../dist/obj/lib$(COMPONENT)
 
-SRCS := lockfile
+SRCS := pidfile daemon signal
 OBJS := $(SRCS:%=$(OBJ_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
@@ -32,8 +32,8 @@ dep:
 
 include:
 	@$(MKDIR) ../dist/include
-	@$(RM) -f ../dist/include/lockfile.h
-	$(LN) -s ../../liblockfile/lockfile.h ../dist/include/lockfile.h
+	@$(RM) -f ../dist/include/daemon.h
+	$(LN) -s ../../libdaemon/daemon.h ../dist/include/daemon.h
 
 $(LIB_DIR)/$(TARGET): $(OBJS)
 	@$(MKDIR) $(dir $@)
@@ -48,7 +48,7 @@ clean:
 
 distclean: clean
 	$(RM) -f $(LIB_DIR)/$(TARGET)
-	$(RM) -f ../dist/include/lockfile.h
+	$(RM) -f ../dist/include/daemon.h
 
 test:
 	@echo "GITHASH: $(GITHASH)"

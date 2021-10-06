@@ -1,0 +1,135 @@
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: random-1
+  namespace: step-3
+  labels:
+    demo/project: c_ipc
+    demo/app: step-3
+    demo/module: random-1
+    demo/ipctype: server
+    demo/ipctopic: distribution-bell
+    active: "yes"
+spec:
+  volumes:
+  - name: server-logdir
+    emptyDir: {}
+  containers:
+    - name: log
+      image: tail:latest
+      imagePullPolicy: Never
+      args: [ "/var/log/server/myserver.distribution-bell.log"]
+      volumeMounts:
+        - mountPath: /var/log/server
+          name: server-logdir
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+    - name: server
+      image: server:wrapped
+      imagePullPolicy: Never
+      volumeMounts:
+        - mountPath: /var/log/server
+          name: server-logdir
+      name: cache-volume
+      env:
+        - name: IPC_TOPIC
+          value: distribution-bell
+        - name: IPC_NAME
+          value: myserver
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+  hostIPC: true
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: demo/ipctopic
+            operator: In
+            values:
+            - distribution-bell
+          - key: demo/ipctype
+            operator: In
+            values:
+            - server
+        topologyKey: kubernetes.io/hostname
+        namespaces: []
+
+
+# ---
+
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: random-1
+#   namespace: step-3
+#   labels:
+#     demo/project: c_ipc
+#     demo/app: step-3
+#     demo/module: random-1
+#     demo/ipctype: server
+#     demo/ipctopic: distribution-bell
+#     active: "yes"
+# spec:
+#   volumes:
+#     - name: server-logdir
+#       ephemeral:
+#         volumeClaimTemplate:
+#           metadata:
+#             labels:
+#               type: my-frontend-volume
+#           spec:
+#           accessModes: [ "ReadWriteOnce" ]
+#           storageClassName: "scratch-storage-class"
+#           resources:
+#             requests:
+#               storage: 1Gi
+# containers:
+#   - name: log
+#     image: tail:latest
+#     imagePullPolicy: Never
+#     args: [ "/var/log/server/myserver-distribution-bell.log"]
+#     volumeMounts:
+#       - mountPath: "/var/log/server"
+#         name: server-logdir
+#     resources:
+#       limits:
+#         memory: "128Mi"
+#         cpu: "500m"
+#   - name: server
+#     image: server:wrapped
+#     imagePullPolicy: Never
+#     volumeMounts:
+#       - mountPath: "/var/log/server"
+#         name: server-logdir
+#     env:
+#       - name: IPC_TOPIC
+#         value: distribution-bell
+#       - name: IPC_NAME
+#         value: myserver
+#     resources:
+#       limits:
+#         memory: "128Mi"
+#         cpu: "500m"
+#     hostIPC: true
+#     affinity:
+#       podAntiAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#         - labelSelector:
+#             matchExpressions:
+#             - key: demo/ipctopic
+#               operator: In
+#               values:
+#               - distribution-bell
+#             - key: demo/ipctype
+#               operator: In
+#               values:
+#               - server
+#           topologyKey: kubernetes.io/hostname
+#           namespaces: []

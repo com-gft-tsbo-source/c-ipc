@@ -1,0 +1,72 @@
+FROM debian:buster-slim AS BUILDIMAGE
+
+ARG GITHASH
+ARG TIMESTAMP
+ARG COMPONENT
+
+#RUN apk --update add --no-cache build-base gcc abuild binutils make argp-standalone linux-headers git
+RUN apt-get update && \
+    apt-get install -y libbsd-dev && \
+    apt-get install -y git gcc make binutils build-essential && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir /tmp/build
+
+COPY c /tmp/build/src
+
+WORKDIR /tmp/build/src
+RUN make distclean
+# RUN LDFLAGS=-largp GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make dep lib
+RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make dep lib
+
+WORKDIR /tmp/build/src/${COMPONENT}
+# RUN LDFLAGS=-largp GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
+RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
+
+WORKDIR /tmp/build
+
+# ----------------------------------------------------------------------------
+
+FROM golang:alpine AS WRAPPERIMAGE
+
+ARG GITHASH
+ARG TIMESTAMP
+ARG WRAPPER
+
+RUN apk add build-base gcc abuild binutils make argp-standalone linux-headers git
+RUN mkdir /tmp/build
+
+COPY go /tmp/build/src
+
+WORKDIR /tmp/build/src
+RUN make distclean
+WORKDIR /tmp/build/src/${WRAPPER}
+RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make dep
+RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
+
+WORKDIR /tmp/build
+
+# ----------------------------------------------------------------------------
+
+FROM debian:buster-slim
+
+ARG GITHASH
+ARG TIMESTAMP
+ARG COMPONENT
+ARG WRAPPER
+
+# RUN apk --update add --no-cache bash
+# RUN adduser -H -D "${COMPONENT}"
+RUN apt-get update && \
+    apt-get install -y libbsd0 && \
+    apt-get install -y curl && \
+    apt-get install -y psmisc procps lsof strace ltrace gdb && \
+    rm -rf /var/lib/apt/lists/*
+RUN adduser --no-create-home --disabled-password --disabled-login --gecos "Application user" "${COMPONENT}"
+COPY --from=WRAPPERIMAGE /tmp/build/src/dist/bin/${WRAPPER} /opt/${WRAPPER}
+COPY --from=BUILDIMAGE   /tmp/build/src/dist/bin/${COMPONENT} /opt/${COMPONENT}
+RUN chown "${COMPONENT}:${COMPONENT}" "/opt/${COMPONENT}" "/opt/${WRAPPER}" && \
+    chmod og-rwx,u=rx "/opt/${COMPONENT}" "/opt/${WRAPPER}" 
+
+USER ${COMPONENT}
+
+ENTRYPOINT [ "/opt/ms-measure" ] 

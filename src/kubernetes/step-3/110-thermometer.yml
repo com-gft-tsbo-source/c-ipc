@@ -1,0 +1,40 @@
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: thermometer-1
+  namespace: step-3
+  labels:
+    demo/project: c_ipc
+    demo/app: step-3
+    demo/module: thermometer-1
+    demo/ipctype: client
+    demo/ipctopic: distribution-bell
+    active: "yes"
+spec:
+  containers:
+    - name: server
+      image: client:wrapped
+      imagePullPolicy: Never
+      args: [ "--version", "1.0.0", "--address", "TH:01", "--type", "thermometer", "--randomsvc", "/opt/client --topic /distribution-bell myclient"  ]
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+  hostIPC: true
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: demo/ipctopic
+            operator: In
+            values:
+            - distribution-bell
+          - key: demo/ipctype
+            operator: In
+            values:
+            - server
+        topologyKey: kubernetes.io/hostname
+        namespaces: []

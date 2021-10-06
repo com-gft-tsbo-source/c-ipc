@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: step-1
+  labels: 
+    demo/project: c_ipc
+    demo/app: step-1
+    config.istio.io/admission-webhooks: disabled
+    istio-injection: disabled

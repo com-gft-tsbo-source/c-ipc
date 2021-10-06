@@ -6,100 +6,47 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <stdio.h>
+#include <bsd/unistd.h>
 #include "ipc_common.h"
 #include "config.h"
 #include "config-server.h"
+#include "daemon.h"
 #include "logging.h"
 #include "lockfile.h"
 
+extern  struct logsetup global_ls;
 struct logsetup *ls = &global_ls;
 
-typedef void (*sighandler_t)(int);
-static sighandler_t handle_signal (int sig_nr, sighandler_t signalhandler) {
-   struct sigaction neu_sig, alt_sig;
-   neu_sig.sa_handler = signalhandler;
-   sigemptyset (&neu_sig.sa_mask);
-   neu_sig.sa_flags = SA_RESTART;
-   if (sigaction (sig_nr, &neu_sig, &alt_sig) < 0)
-      return SIG_ERR;
-   return alt_sig.sa_handler;
-}
+// ###########################################################################
+// ###########################################################################
+// Signal handling
+// ###########################################################################
+// ###########################################################################
 
 static void do_sigterm (int sig_nr) {
-    LOG("Terminating for SIGTERM.\n");
+    LOG_SIGNAL("Terminating for SIGTERM.\n");
     exit(1);
 }
 
 static void do_sigint (int sig_nr) {
-    LOG("Terminating for SIGINT.\n");
+    LOG_SIGNAL("Terminating for SIGINT.\n");
     exit(1);
 }
 
-static void to_daemon(){
-    pid_t pid;
+// ###########################################################################
+// ###########################################################################
+// MAIN
+// ###########################################################################
+// ###########################################################################
 
-    pid = fork();
-
-    if(pid < 0) exit(EXIT_FAILURE);
-
-    if (pid > 0) exit(EXIT_SUCCESS);
-
-    if (setsid() < 0) exit(EXIT_FAILURE);
-
-    pid = fork();
-
-    if(pid < 0) exit(EXIT_FAILURE);
-
-    if (pid > 0) exit(EXIT_SUCCESS);
-
-    chdir ("/");
-    umask (0);
-
-    int fd0, fd1, fd2;
-    int i;
-
-    for (i = sysconf(_SC_OPEN_MAX); i > 0; i--)
-        close (i);
-
-    fd0 = open("/dev/null", O_RDWR);
-    fd1 = dup(0);
-    fd2 = dup(0);
-
-}
-
-int create_pidfile(const char* pidfile)
+int main(int argc, char **argv, char **envp)
 {
-    int fd;
-    char buf[16];
-    size_t len=0;
+    extern struct argp argp;
 
-    LOG("Using pidfile '%s'.\n", pidfile);
-    fd = open(pidfile, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-
-    if (fd < 0) {
-        LOG_ERRNO("Can′t open pidfile '%s'.\n", pidfile);
-        exit(1);
-    }
-
-    if (lockfile(fd) < 0) {
-        LOG_ERRNO("Can′t lock pidfile '%s'.\n", pidfile);
-        exit(1);
-    }
-
-    ftruncate(fd, 0);
-    len = snprintf(buf, sizeof(buf), "%ld", (long)getpid());
-    write(fd, buf, len);
-    return(0);
-}
-
-
-int main(int argc, char **argv)
-{
     // -----------------------------------------------------------------------
     // Local variables
-    char logbuffer[512];
+
+    struct arguments arguments;
     mqd_t qd_server;
     mqd_t qd_client; 
     struct mq_attr attr;
@@ -108,32 +55,73 @@ int main(int argc, char **argv)
     long int counter = 0;
     char module_name[MAX_MODULE_NAME];
     char server_queue[MAX_QUEUE_NAME];
-    char logfile_name[sizeof(ls->logfile_name)];
+    char logfile_name[sizeof(arguments.logfile)];
 
     // -----------------------------------------------------------------------
     // parse CLI arguments
 
-    struct arguments arguments;
     memset(&arguments, 0, sizeof(arguments));
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
+    setproctitle_init(argc, argv, envp);
 
     // -----------------------------------------------------------------------
     // process CLI arguments
 
-    strncpy(module_id, arguments.module_id, sizeof(module_id));
-    snprintf(module_name, sizeof(module_name), "%s-%08d", module_id, getpid());
-
-    if (arguments.server_queue[0] == 0) {
-        snprintf(arguments.server_queue, sizeof(arguments.server_queue), "/%s-query", module_id);
+    if (arguments.module_id[0] == 0) {
+        const char *ev = getenv("MODULE");
+        if (ev != NULL)
+            snprintf(arguments.module_id, sizeof(arguments.module_id), "%s", ev);
     }
 
-    strncpy(server_queue, arguments.server_queue, sizeof(server_queue));
+    if (arguments.module_id[0] == '@') {
+        const char *ev;
+        arguments.module_id[0] = 0;
+
+        if (arguments.module_id[1] == 0) {
+            ev = getenv("HOSTNAME");
+            if (ev != NULL)
+                snprintf(arguments.module_id, sizeof(arguments.module_id), "%s", ev);
+        } else {
+            ev = getenv(arguments.module_id + 1);
+            if (ev != NULL)
+                snprintf(arguments.module_id, sizeof(arguments.module_id), "%s", ev);
+        }
+    }
+
+    if (arguments.module_id[0] == 0)
+    {
+        fprintf(stderr, "Error: Too few arguments!\n");
+        fprintf(stderr, "Either:\n");
+        fprintf(stderr, "  - Pass the server name as the last cli argument.\n");
+        fprintf(stderr, "  - Set the module environment variable.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    strncpy(module_id, arguments.module_id, sizeof(module_id));
+
+    if (arguments.server_queue[0] == 0) {
+        snprintf(server_queue, sizeof(server_queue), "/%s-query", module_id);
+    } else if (arguments.server_queue[0] != '/') {
+        snprintf(server_queue, sizeof(server_queue), "/%s", arguments.server_queue);
+    } else {
+        strncpy(server_queue, arguments.server_queue, sizeof(server_queue));
+    }
+
+    snprintf(module_name, sizeof(module_name), "%s#%s", module_id, server_queue + 1);
+    LOG_INIT( module_name, NULL, fileno(stdout));
+    setproctitle("%s@%s", server_queue+1, module_id);
 
     if (arguments.logfile[0] != 0) {
         strncpy(logfile_name, arguments.logfile, sizeof(logfile_name));
+
+        if (logfile_name[0] != '-' && logfile_name[1] != '\0' && logfile_name[0] != '/') {
+            LOG_PRINT("Error: Logfile path must be absolute or '-'!\n");
+            exit(EXIT_FAILURE);
+        }
+
     }
     else {
-        snprintf(logfile_name, sizeof(logfile_name), "/var/log/%s.log", module_name);
+        snprintf(logfile_name, sizeof(logfile_name), "/var/log/server/%s.log", module_name);
     }
 
     // -----------------------------------------------------------------------
@@ -144,8 +132,9 @@ int main(int argc, char **argv)
     attr.mq_msgsize = sizeof(msg_request);
     attr.mq_curmsgs = 0;
 
-    if (logfile_name[0] == 0) LOG_INIT( module_name, NULL, fileno(stderr));
-    else                      LOG_INIT( module_name, logfile_name, 0);
+    LOG_CLOSE();
+    if (logfile_name[0] == 0) LOG_INIT( module_name, NULL, fileno(stdout));
+    else                      LOG_INIT( module_name, logfile_name, -1);
 
     LOG("This is module '%s'.\n", module_id);
     LOG("Listening on queue '%s'.\n", server_queue);
@@ -159,7 +148,12 @@ int main(int argc, char **argv)
     handle_signal(SIGINT, do_sigint);
 
     if (! arguments.no_daemon) {
+        LOG_CLOSE();
+
         to_daemon();
+
+        if (logfile_name[0] == 0) LOG_INIT( module_name, NULL, -1);
+        else                      LOG_INIT( module_name, logfile_name, -1);
     }
 
     // -----------------------------------------------------------------------
@@ -172,9 +166,11 @@ int main(int argc, char **argv)
     // -----------------------------------------------------------------------
     // Open listening queue
 
-    if ((qd_server = mq_open(server_queue, O_RDONLY | O_CREAT, QUEUE_PERMISSIONS, &attr)) == -1) {
+    qd_server = mq_open(server_queue, O_RDONLY | O_CREAT, QUEUE_PERMISSIONS, &attr);
+    
+    if (qd_server == -1) {
         LOG_ERRNO("mq_open failed!.\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // -----------------------------------------------------------------------
@@ -190,7 +186,7 @@ int main(int argc, char **argv)
 
         if (mq_receive(qd_server, (char*) &msg_request, sizeof(msg_request), NULL) == -1) {
             LOG_ERRNO("mq_receive failed!.\n");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
         LOG("request received from '%.*s', replying to '%-.*s'.\n", sizeof(msg_request.module_name), msg_request.module_name, sizeof(msg_request.reply_queue), msg_request.reply_queue);
@@ -219,7 +215,7 @@ int main(int argc, char **argv)
         // Close client queue
         if (mq_close(qd_client) == -1) {
             LOG_ERRNO("mq_close failed!.\n");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
     }

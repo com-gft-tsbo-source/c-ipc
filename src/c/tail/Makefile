@@ -1,6 +1,6 @@
 TIMESTAMP ?= $(shell date +%Y%m%d%H%M%S)
 GITHASH := $(shell ( echo "$(GITHASH)" | sed 's/  */\n/g' ; git rev-parse HEAD  ) | sort -u )
-COMPONENT ?= client
+COMPONENT ?= tail
 TARGET ?= $(COMPONENT)
 
 BASE_BIN_DIR ?= ../../../bin
@@ -8,9 +8,8 @@ BIN_DIR ?= ../dist/bin
 LIB_DIR ?= ../dist/lib
 OBJ_DIR ?= ../dist/obj/$(COMPONENT)
 
-_SRCS := client config 
-SRCS := $(SRCS:%=%.c)
-OBJS := $(_SRCS:%=$(OBJ_DIR)/%.o)
+SRCS := tail
+OBJS := $(SRCS:%=$(OBJ_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
 INC_DIRS := ../dist/include
@@ -20,7 +19,7 @@ _CPPFLAGS := $(INC_FLAGS) -MMD -MP $(_CPPFLAGS) $(CPPFLAGS)
 
 LINK_DIR := ../dist/lib
 LINK_STATIC := daemon logging lockfile
-LINK_SYSTEM := rt bsd
+LINK_SYSTEM := rt
 LINK_FLAGS := $(addprefix -l,$(LINK_SYSTEM)) $(addprefix -L,$(LINK_DIR)) $(addprefix -l,$(LINK_STATIC)) 
 LINK_DEPS := $(addsuffix .a,$(addprefix $(LINK_DIR)/lib,$(LINK_STATIC)))
 

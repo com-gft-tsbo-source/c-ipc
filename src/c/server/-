@@ -1,8 +1,0 @@
-[server-00000217] This is module 'server'.
-[server-00000217] Listening on queue '/server-query'.
-[server-00000217] Logfile is '-'.
-[server-00000217] waiting for request.
-[server-00000217] request received from 'aaa-00000219', replying to '/aaa-reply-219'.
-[server-00000217] sent reply '1' to 'aaa-00000219'.
-[server-00000217] waiting for request.
-[server-00000217] Terminating for SIGINT.

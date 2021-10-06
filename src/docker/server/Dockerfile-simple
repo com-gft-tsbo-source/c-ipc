@@ -1,0 +1,57 @@
+FROM debian:buster-slim AS BUILDIMAGE
+
+ARG GITHASH
+ARG TIMESTAMP
+ARG COMPONENT
+
+#RUN apk --update add --no-cache build-base gcc abuild binutils make argp-standalone linux-headers git
+RUN apt-get update && \
+    apt-get install -y libbsd-dev && \
+    apt-get install -y git gcc make binutils build-essential && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir /tmp/build
+
+COPY c /tmp/build/src
+
+WORKDIR /tmp/build/src
+RUN make distclean
+# RUN LDFLAGS=-largp GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make dep lib
+RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make dep lib
+
+WORKDIR /tmp/build/src/server
+# RUN LDFLAGS=-largp GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
+RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
+
+WORKDIR /tmp/build/src/client
+# RUN LDFLAGS=-largp GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
+RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
+
+WORKDIR /tmp/build
+
+# ----------------------------------------------------------------------------
+
+FROM debian:buster-slim
+
+ARG GITHASH
+ARG TIMESTAMP
+ARG COMPONENT
+
+# RUN apk --update add --no-cache bash
+# RUN adduser -H -D "${COMPONENT}"
+RUN apt-get update && \
+    apt-get install -y libbsd0 && \
+    apt-get install -y psmisc procps lsof strace ltrace gdb && \
+    rm -rf /var/lib/apt/lists/*
+RUN adduser --no-create-home --disabled-password --disabled-login --gecos "Application user" "${COMPONENT}"
+RUN mkdir "/var/log/${COMPONENT}"
+RUN chown "${COMPONENT}:${COMPONENT}" "/var/log/${COMPONENT}"
+COPY docker/${COMPONENT}/run.sh /opt/run.sh
+COPY --from=BUILDIMAGE "/tmp/build/src/dist/bin/server" "/opt/server"
+COPY --from=BUILDIMAGE "/tmp/build/src/dist/bin/client" "/opt/client"
+RUN chown "${COMPONENT}:${COMPONENT}" "/opt/server" "/opt/client" "/var/log/${COMPONENT}" /var/run/ /opt/run.sh && \
+    chmod og-rwx,u=rx /opt/server /opt/client /opt/run.sh && \
+    chmod ug=rwx,o=rx "/var/log/${COMPONENT}" /var/run/
+
+USER ${COMPONENT}
+
+CMD [ "/opt/server" ]

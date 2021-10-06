@@ -1,0 +1,44 @@
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: random-1
+  namespace: step-1
+  labels:
+    demo/project: c_ipc
+    demo/app: step-1
+    demo/module: random-1
+    demo/ipctype: server
+    demo/ipctopic: distribution-bell
+    active: "yes"
+spec:
+  containers:
+    - name: server
+      image: server:wrapped
+      imagePullPolicy: Never
+      env:
+        - name: IPC_TOPIC
+          value: distribution-bell
+        - name: IPC_NAME
+          value: myserver
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+  hostIPC: true
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: demo/ipctopic
+            operator: In
+            values:
+            - distribution-bell
+          - key: demo/ipctype
+            operator: In
+            values:
+            - server
+        topologyKey: kubernetes.io/hostname
+        namespaces: []
