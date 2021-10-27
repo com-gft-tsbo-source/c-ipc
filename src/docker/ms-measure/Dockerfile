@@ -31,5 +31,4 @@ RUN chown ${COMPONENT}:${COMPONENT} /opt/${COMPONENT} && \
     chmod og-rwx,u=rx /opt/${COMPONENT}
 
 USER ${COMPONENT}
-ENTRYPOINT [ "/opt/ms-measure" ] 
-# CMD [ "--no-daemon", "--server" ]
+ENTRYPOINT [ "/opt/ms-measure", "--version 1.0.0", "--name", "ms-measure", "--type", "thermometer", "--address", "01:00"  ] 

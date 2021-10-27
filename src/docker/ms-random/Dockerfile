@@ -30,5 +30,4 @@ RUN chown ${COMPONENT}:${COMPONENT} /opt/${COMPONENT} && \
     chmod og-rwx,u=rx /opt/${COMPONENT}
 
 USER ${COMPONENT}
-# ENTRYPOINT [ "/opt/ms-random" ] 
-# CMD [ "--no-daemon", "--server" ]
+ENTRYPOINT [ "/opt/ms-random", "--version", "1.0.0", "--name", "randomsvc", "--port", "8081" ]

@@ -25,7 +25,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             arguments->pidfile[sizeof(arguments->pidfile) - 1] = 0;
             break;
 
-        case 's': 
+        case 't': 
 
             strncpy(arguments->server_queue, arg, sizeof(arguments->server_queue));
             arguments->server_queue[sizeof(arguments->server_queue) - 1] = 0;
@@ -79,7 +79,7 @@ static char args_doc[] = "[SERVER ID]";
 static struct argp_option options[] = { 
     { "logfile", 'l', "logfile path", 0, "Path to the logfile."},
     { "pidfile", 'p', "pidfile path", 0, "Path to the pidfile."},
-    { "topic", 's', "queue name", 0, "Central communications queue."},
+    { "topic", 't', "queue name", 0, "Central communications queue."},
     { "no-daemon", 'n', 0, 0, "Don't run as a daemon."},
     { 0 } 
 };

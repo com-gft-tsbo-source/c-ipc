@@ -10,14 +10,14 @@ metadata:
     demo/app: step-2
     demo/module: thermometer-1
     demo/ipctype: client
-    demo/ipctopic: distribution-bell
+    demo/ipctopic: mytopic
     active: "yes"
 spec:
   containers:
     - name: server
       image: client:wrapped
       imagePullPolicy: Never
-      args: [ "--version", "1.0.0", "--address", "TH:01", "--type", "thermometer", "--randomsvc", "/opt/client --topic /distribution-bell myclient"  ]
+      args: [ "--version", "1.0.0", "--address", "TH:01", "--type", "thermometer", "--randomsvc", "/opt/client --topic /mytopic myclient"  ]
       resources:
         limits:
           memory: "128Mi"
@@ -31,7 +31,7 @@ spec:
           - key: demo/ipctopic
             operator: In
             values:
-            - distribution-bell
+            - mytopic
           - key: demo/ipctype
             operator: In
             values:

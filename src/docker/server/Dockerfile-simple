@@ -4,7 +4,6 @@ ARG GITHASH
 ARG TIMESTAMP
 ARG COMPONENT
 
-#RUN apk --update add --no-cache build-base gcc abuild binutils make argp-standalone linux-headers git
 RUN apt-get update && \
     apt-get install -y libbsd-dev && \
     apt-get install -y git gcc make binutils build-essential && \
@@ -15,16 +14,13 @@ COPY c /tmp/build/src
 
 WORKDIR /tmp/build/src
 RUN make distclean
-# RUN LDFLAGS=-largp GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make dep lib
 RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make dep lib
 
 WORKDIR /tmp/build/src/server
-# RUN LDFLAGS=-largp GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
 RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
 
 WORKDIR /tmp/build/src/client
-# RUN LDFLAGS=-largp GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
-RUN GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
+RUN COMPONENT=client GITHASH=${GITHASH} TIMESTAMP=${TIMESTAMP} make all
 
 WORKDIR /tmp/build
 
@@ -36,8 +32,6 @@ ARG GITHASH
 ARG TIMESTAMP
 ARG COMPONENT
 
-# RUN apk --update add --no-cache bash
-# RUN adduser -H -D "${COMPONENT}"
 RUN apt-get update && \
     apt-get install -y libbsd0 && \
     apt-get install -y psmisc procps lsof strace ltrace gdb && \
@@ -54,4 +48,4 @@ RUN chown "${COMPONENT}:${COMPONENT}" "/opt/server" "/opt/client" "/var/log/${CO
 
 USER ${COMPONENT}
 
-CMD [ "/opt/server" ]
+ENTRYPOINT [ "/opt/server" ]

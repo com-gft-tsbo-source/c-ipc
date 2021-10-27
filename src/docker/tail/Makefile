@@ -25,7 +25,6 @@ docker: ../dist/$(COMPONENT).iid
 	  --build-arg TIMESTAMP="$(TIMESTAMP)" \
 	  --build-arg COMPONENT=$(COMPONENT) \
 	  --tag $(COMPONENT):latest \
-	  --tag $(COMPONENT):"$(_GITHASH)" \
 	  --label VAIANT="0" \
 	  --label PROJECT="$(PROJECT)" \
 	  --label GITHASH="$(_GITHASH)" \

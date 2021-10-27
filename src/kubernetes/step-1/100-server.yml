@@ -10,7 +10,7 @@ metadata:
     demo/app: step-1
     demo/module: random-1
     demo/ipctype: server
-    demo/ipctopic: distribution-bell
+    demo/ipctopic: mytopic
     active: "yes"
 spec:
   containers:
@@ -19,7 +19,7 @@ spec:
       imagePullPolicy: Never
       env:
         - name: IPC_TOPIC
-          value: distribution-bell
+          value: mytopic
         - name: IPC_NAME
           value: myserver
       resources:
@@ -35,7 +35,7 @@ spec:
           - key: demo/ipctopic
             operator: In
             values:
-            - distribution-bell
+            - mytopic
           - key: demo/ipctype
             operator: In
             values:

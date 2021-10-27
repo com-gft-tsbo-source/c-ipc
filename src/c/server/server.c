@@ -88,6 +88,10 @@ int main(int argc, char **argv, char **envp)
         }
     }
 
+    if (arguments.module_id[0] == 0) 
+        if (arguments.server_queue[0] != 0) 
+            snprintf(arguments.module_id, sizeof(arguments.module_id), "%s", arguments.server_queue);
+
     if (arguments.module_id[0] == 0)
     {
         fprintf(stderr, "Error: Too few arguments!\n");

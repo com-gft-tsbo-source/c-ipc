@@ -2,9 +2,11 @@
 *.d
 *.a
 *.iid
-*/bin/*
-*/lib/*
-*/obj/*
-*/dist/*
-.vscode/*
-*/old/*
+*.swp
+*.tmp
+**/bin
+**/lib
+**/obj
+**/dist
+.vscode
+**/old

@@ -15,7 +15,7 @@ all: docker
 
 docker: ../dist/$(COMPONENT).iid
 
-../dist/$(COMPONENT).iid: ../../go/$(COMPONENT)/*/*.go \
+../dist/$(COMPONENT).iid: Dockerfile  ../../go/$(COMPONENT)/*/*.go \
 						../../go/$(COMPONENT)/Makefile
 	@if [ -f "../dist/$(COMPONENT).iid" ] ; then i=$$( cat "../dist/$(COMPONENT).iid" ); docker image rm -f $$i ; rm -f "../dist/$(COMPONENT).iid"  2>/dev/null ; fi
 	@docker image build -f ./Dockerfile \

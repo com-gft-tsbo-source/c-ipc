@@ -10,36 +10,35 @@ metadata:
     demo/app: step-3
     demo/module: random-1
     demo/ipctype: server
-    demo/ipctopic: distribution-bell
+    demo/ipctopic: mytopic
     active: "yes"
 spec:
   volumes:
   - name: server-logdir
     emptyDir: {}
   containers:
-    - name: log
-      image: tail:latest
-      imagePullPolicy: Never
-      args: [ "/var/log/server/myserver.distribution-bell.log"]
-      volumeMounts:
-        - mountPath: /var/log/server
-          name: server-logdir
-      resources:
-        limits:
-          memory: "128Mi"
-          cpu: "500m"
     - name: server
       image: server:wrapped
       imagePullPolicy: Never
       volumeMounts:
         - mountPath: /var/log/server
           name: server-logdir
-      name: cache-volume
       env:
         - name: IPC_TOPIC
-          value: distribution-bell
+          value: mytopic
         - name: IPC_NAME
           value: myserver
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+    - name: log
+      image: tail:latest
+      imagePullPolicy: Never
+      args: [ "/var/log/server/myserver.mytopic.log"]
+      volumeMounts:
+        - mountPath: /var/log/server
+          name: server-logdir
       resources:
         limits:
           memory: "128Mi"
@@ -53,7 +52,7 @@ spec:
           - key: demo/ipctopic
             operator: In
             values:
-            - distribution-bell
+            - mytopic
           - key: demo/ipctype
             operator: In
             values:
@@ -74,7 +73,7 @@ spec:
 #     demo/app: step-3
 #     demo/module: random-1
 #     demo/ipctype: server
-#     demo/ipctopic: distribution-bell
+#     demo/ipctopic: mytopic
 #     active: "yes"
 # spec:
 #   volumes:
@@ -94,7 +93,7 @@ spec:
 #   - name: log
 #     image: tail:latest
 #     imagePullPolicy: Never
-#     args: [ "/var/log/server/myserver-distribution-bell.log"]
+#     args: [ "/var/log/server/myserver-mytopic.log"]
 #     volumeMounts:
 #       - mountPath: "/var/log/server"
 #         name: server-logdir
@@ -110,7 +109,7 @@ spec:
 #         name: server-logdir
 #     env:
 #       - name: IPC_TOPIC
-#         value: distribution-bell
+#         value: mytopic
 #       - name: IPC_NAME
 #         value: myserver
 #     resources:
@@ -126,7 +125,7 @@ spec:
 #             - key: demo/ipctopic
 #               operator: In
 #               values:
-#               - distribution-bell
+#               - mytopic
 #             - key: demo/ipctype
 #               operator: In
 #               values:

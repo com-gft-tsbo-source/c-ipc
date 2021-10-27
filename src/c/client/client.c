@@ -46,6 +46,7 @@ int main(int argc, char **argv, char **envp)
 
     // -----------------------------------------------------------------------
     // Local variables
+
     char logbuffer[512];
     mqd_t qd_server;
     mqd_t qd_client; 
@@ -82,6 +83,10 @@ int main(int argc, char **argv, char **envp)
                 snprintf(arguments.module_id, sizeof(arguments.module_id), "%s", ev);
         }
     }
+
+    if (arguments.module_id[0] == 0)
+        if (arguments.server_queue != 0)
+            snprintf(arguments.module_id, sizeof(arguments.module_id), "%s", arguments.server_queue);
 
     if (arguments.module_id[0] == 0)
     {

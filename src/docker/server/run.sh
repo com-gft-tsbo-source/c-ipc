@@ -8,6 +8,7 @@ name="$1"  ; shift
 
 if [[ -z "$topic" ]] ; then topic="$IPC_TOPIC" ; fi
 if [[ -z "$name" ]] ; then name="$IPC_NAME" ; fi
+if [[ -z "$name" ]] ; then name="$topic" ; fi
 
 topic=$( echo "$topic" | sed 's%^/*%%' )
 

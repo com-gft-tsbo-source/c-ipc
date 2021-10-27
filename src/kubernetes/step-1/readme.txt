@@ -1,1 +1,1 @@
-kubectl -n step-1 logs --all-containers --max-log-requests=100 --follow random-1
+ks1 logs --follow --all-containers random-1

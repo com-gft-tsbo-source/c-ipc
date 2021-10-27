@@ -18,7 +18,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             arguments->logfile[sizeof(arguments->logfile) - 1] = 0;
             break;
 
-        case 's': 
+        case 't': 
 
             strncpy(arguments->server_queue, arg, sizeof(arguments->server_queue));
             arguments->server_queue[sizeof(arguments->server_queue) - 1] = 0;
@@ -56,7 +56,7 @@ static char doc[] = "Random number generator client.";
 static char args_doc[] = "[CLIENT ID]";
 static struct argp_option options[] = { 
     { "logfile", 'l', "logfile path", 0, "Path to the logfile."},
-    { "topic", 's', "queue name", 0, "Central communications queue."},
+    { "topic", 't', "queue name", 0, "Central communications queue."},
     { 0 } 
 };
 

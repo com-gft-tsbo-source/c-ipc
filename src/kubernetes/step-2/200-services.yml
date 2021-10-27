@@ -15,7 +15,7 @@ spec:
     demo/app: step-2
     demo/module: thermometer-1
     demo/ipctype: client
-    demo/ipctopic: distribution-bell
+    demo/ipctopic: mytopic
     active: "yes"
   ports:
     - targetPort: 8080
