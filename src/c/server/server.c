@@ -111,7 +111,7 @@ int main(int argc, char **argv, char **envp)
         strncpy(server_queue, arguments.server_queue, sizeof(server_queue));
     }
 
-    snprintf(module_name, sizeof(module_name), "%s#%s", module_id, server_queue + 1);
+    snprintf(module_name, sizeof(module_name), "%s@%s", server_queue + 1, module_id);
     LOG_INIT( module_name, NULL, fileno(stdout));
     setproctitle("%s@%s", server_queue+1, module_id);
 
